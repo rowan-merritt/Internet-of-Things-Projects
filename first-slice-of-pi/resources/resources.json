@@ -1,0 +1,55 @@
+{
+	"pi": {
+		"name": "My Pi",
+		"description": "The world's tastiest Pi",
+		"port": 8484,
+		"sensors": {
+			"name": "Sensors List",
+			"description": "Gateway to all sensors",
+			"pir": {
+				"name": "Passive Infrared Sensor",
+				"description": "A passive infrared sensor",
+				"value": true,
+				"gpio": 4
+			},
+			"dht": {
+				"name": "DHT22 Sensor",
+				"model": 22,
+				"description": "A dual temperature and humidity sensor",
+				"gpio": 17,
+				"temperature": {
+					"name": "Temperature Sensor",
+					"description": "Measures ambient temperature",
+					"unit": "celsius",
+					"value": 0
+				},
+				"humidity": {
+					"name": "Humidity Sensor",
+					"description": "Measures ambient humidity",
+					"unit": "%",
+					"value": 0
+				}
+			}
+		},
+		"actuators": {
+			"name": "Actuators List",
+			"description": "Gateway to all actuators",
+			"leds": {
+				"name": "LED List",
+				"description": "List of LEDs",
+				"1": {
+					"name": "LED 1",
+					"description": "It lights up",
+					"value": false,
+					"gpio": 16
+				},
+				"2": {
+					"name": "LED 2",
+					"description": "It lights up",
+					"value": false,
+					"gpio": 21
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Polling Temperature Charts</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <style>
+    body {
+        color: rgb(45, 45, 45);
+        padding: 10px;
+        font-family: arial;
+    }
+    header {
+        font-size: 1.5em;
+        font-weight: bold;
+    }
+    #all-contents {
+        max-width: 800px;
+        margin: auto;
+    }
+
+    /* navigation menu */
+    nav {
+        background: rgb(239, 80, 41);
+        margin: 0 auto;
+        margin-bottom: 20px;
+        display: flex;
+        padding: 10px;
+        border: 4px solid green;
+        border-radius: 20px;
+    }
+    nav header {
+        display: flex;
+        align-items: center;
+        color: rgb(255, 255, 255);
+        flex: 1;
+    }
+    nav ul {
+        list-style-image: none;
+    }
+    nav li {
+        display: inline-block;
+        padding: 0 10px;
+    }
+    nav a {
+        text-decoration: none;
+        color: #fff;
+    }
+    main {
+        background: rgb(245, 238, 219);
+        display: flex;
+    }
+    #reg-chart-container {
+        margin-right: 25px;
+        padding: 10px;
+        width: 40%;
+    }
+    #ws-chart-container {
+        margin-right: 25px;
+        padding: 10px;
+        width: 40%;
+    }
+    #reg-chart {
+        margin-right: 25px;
+        padding: 10px;
+        width: 100%;
+        height: 300px;
+    }
+    #ws-chart {
+        margin-right: 25px;
+        padding: 10px;
+        width: 100%;
+        height: 300px;
+    }
+    p {
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <nav>
+      <header>Polling Temperature Charts</header>
+      <ul>
+          <li><a href="polling-temp-charts.html">Polling Temperature Charts</a></li>
+          <li><a href="actuator-form.html">Actuator Form</a></li>
+          <li><a href="device-parser.html">Device Parser</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <main>
+    <div id="reg-chart-container">
+      <div id="reg-chart"></div>
+    </div>
+    <div id="ws-chart-container">
+      <div id="ws-chart"></div>
+    </div>
+  </main>
+
+  <script type="text/javascript">
+
+  ///////////////////////////////////////////////////////////
+  /////////// ALL CODE SHOULD GO IN THIS FUNCTION ///////////
+  ///////////////////////////////////////////////////////////
+  $(document).ready(function () {
+    // Chart initialization code 
+    var maxDataPoints = 10;
+    
+    // Setup to use charts
+    google.charts.load('current', {'packages':['corechart']});
+    google.setOnLoadCallback(drawVisualization);
+    function drawVisualization(){
+      
+      /////////////////////////////////////////////////
+      // CHART PREP SECTION: DO NOT TOUCH /////////////
+      /////////////////////////////////////////////////
+      var regChart = new google.visualization.LineChart($('#reg-chart')[0]);
+      var wsChart = new google.visualization.LineChart($('#ws-chart')[0]);
+      var regData = google.visualization.arrayToDataTable([
+        ['Time', 'Regular Polling Temperature'],
+        [getTime(), 0]
+      ]); 
+      var wsData = google.visualization.arrayToDataTable([
+        ['Time', 'WebSocket Polling Temperature'],
+        [getTime(), 0]
+      ]);
+
+      var options = {
+        title: 'Temperature',
+        curveType: 'function',
+        animation: {
+          duration: 1000,
+          easing: 'in'
+        },
+        legend: {position: 'bottom'}
+      };
+      /////////////////////////////////////////////////
+      // END CHART PREP SECTION: //////////////////////
+      /////////////////////////////////////////////////
+      
+      // Code to add a data point
+      function addDataPoint(dataPoint, dataSet, chart) {
+        if (dataSet.getNumberOfRows() > maxDataPoints) {
+          dataSet.removeRow(0);
+        }
+        dataSet.addRow([getTime(), dataPoint.value]);
+        chart.draw(dataSet, options);
+      }
+
+      // TODO 1: Initialize high and low records (DONE)
+        var regHighest = -500;
+        var regLowest = 500;
+        var wsHighest = -500;
+        var wsLowest = 500;
+
+        $("#reg-chart-container").append($("<p>").attr("id", "reg-highest").text("Highest recorded value is " + regHighest));
+        $("#reg-chart-container").append($("<p>").attr("id", "reg-lowest").text("Highest recorded value is " + regLowest));
+        $("#ws-chart-container").append($("<p>").attr("id", "ws-highest").text("Highest recorded value is " + wsHighest));
+        $("#ws-chart-container").append($("<p>").attr("id", "ws-lowest").text("Highest recorded value is " + wsLowest));
+
+      // TODO 2: Update high and low records (DONE)
+        function updateRegRecords(value){
+          // Update the regular polling records
+            if (regHighest < value){
+              regHighest = value;
+              $("#reg-highest").text("Highest recorded value is " + regHighest);
+            }
+        
+            else if (regLowest > value){
+              regLowest = value;
+              $("#res-lowest").text("Lowest recorded value is " + regLowest);
+            }
+        }
+
+        function updateWSRecords(value){
+          // Update the WebSocket polling records
+            if (wsHighest < value){
+              wsHighest = value;
+              $("#ws-highest").text("Highest recorded value is " + wsHighest);
+            }
+
+            else if (wsLowest > value){
+              wsLowest = value;
+              $("#ws-lowest").text("Lowest recorded value is " + wsLowest);
+            }
+        }
+
+      // TODO 3: Regular Polling (DONE)
+        function doPoll() {
+          $.getJSON("https://6a08ff0bb0d1.ngrok.io/pi/sensors/dht/temperature", function (result) {
+            addDataPoint(result, regData, regChart);
+
+            updateRegRecords(result.value);
+
+            setTimeout(10000);
+
+          });
+
+        }
+
+        doPoll();
+
+      // TODO 4: WebSocket Polling (DONE)
+        var socket = new WebSocket('ws://https://6a08ff0bb0d1.ngrok.io/pi/sensors/dht/temperature');
+        
+        // Create a new WebSocket connection here
+
+          socket.onmessage = function (event) {
+            // Fill in the body of the onmessage function
+              var result = JSON.parse(event.data);
+
+              addDataPoint(result, wsData, wsChart);
+
+              updateWSRecords(result.value);
+          };
+
+          socket.onerror = function (error) {
+            // Fill in the body of the onerror function
+              console.log(error);
+
+          };
+
+          function getTime() {
+            var d = new Date();
+            return d.toLocaleTimeString();
+
+          }
+
+    }
+  });
+
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Device Parser</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <style>
+      body {
+          color: rgb(45, 45, 45);
+          padding: 10px;
+          font-family: arial;
+      }
+      header {
+          font-size: 1.5em;
+          font-weight: bold;
+      }
+      [id=all-contents] {
+          max-width: 800px;
+          margin: auto;
+      }
+  
+      /* navigation menu */
+      nav {
+          background: rgb(239, 80, 41);
+          margin: 0 auto;
+          margin-bottom: 20px;
+          display: flex;
+          padding: 10px;
+          border: 4px solid green;
+          border-radius: 20px;
+      }
+      nav header {
+          display: flex;
+          align-items: center;
+          color: rgb(255, 255, 255);
+          flex: 1;
+      }
+      nav ul {
+          list-style-image: none;
+      }
+      nav li {
+          display: inline-block;
+          padding: 0 10px;
+      }
+      nav a {
+          text-decoration: none;
+          color: #fff;
+      }
+  </style>
+</head>
+
+<body>
+  <div>
+    <nav>
+      <header>Device Parser</header>
+      <ul>
+          <li><a href="polling-temp-charts.html">Polling Temperature Charts</a></li>
+          <li><a href="actuator-form.html">Actuator Form</a></li>
+          <li><a href="device-parser.html">Device Parser</a></li>
+      </ul>
+    </nav>
+  </div>
+<h1>Browse a new device</h1>
+
+<form id="message-form">
+  <input type="text" id="host" name="host" value="http://devices.webofthings.io/pi" placeholder="The root URL of a WoT device"/>
+  <button type="submit">Browse this device</button>
+</form>
+
+<h4>Device Metadata</h4>
+
+<p>
+  <b>Metadata.</b> 
+  A general model used by this device can be found here: 
+  <div id="meta"></div>
+</p>
+
+<p>
+  <b>Documentation.</b> 
+  A human-readable documentation specifically for this device can be found here: 
+  <div id="doc"></div>
+</p>
+
+<p>
+  <b>Sensors.</b> 
+  The sensors offered by this device:
+  <div id="sensors"></div>
+</p>
+
+<ul id="sensors-list"></ul>
+
+<script>
+(function ($) {
+  function processForm(e) {
+
+    var sensorsPath = '';
+
+    $.ajax({
+      // TODO 6: Add in the basic properties and error property of the object passed to the AJAX call
+        url: $('#host').val(),
+        method: 'GET',
+        dataType: 'json',
+        error: function (jqXHR, textStatus, errorThrown) {
+          console.log(errorThrown);
+        },
+
+        success: function (data) {
+          // These two lines add links to the metadata and documentation of the device, respectively.
+          // data.links.meta.title and data.links.doc.title place little bits of plain text ("Metadata" and "Documentation", respectively) before the links themselves
+            $('#meta').html(data.links.meta.title + " <a href=\"" + data.links.meta.rel + "\">" + data.links.meta.rel + "</a>");
+            $('#doc').html(data.links.doc.title + " <a href=\"" + data.links.doc.rel + "\">" + data.links.doc.rel + "</a>");
+            
+        sensorsPath = data.url + data.resources.sensors.url
+
+      // TODO 7: Generate the URL to the sensors of the device ()
+        $.ajax({
+          url: sensorsPath,
+          method: 'GET',
+          dataType: 'json',
+
+      // TODO 8: Create a success function that iterates over the list of sensors and displays them
+          success: function (data) {
+            // Part 1 (DONE)
+              var sensorsList = " ";
+
+            // Part 2 (DONE)
+              $('#sensors').html(Object.keys(data).length + " sensors found!");
+
+            // Part 3 (DONE)
+              var html = "<li><a href=\"" + sensorsPath + "temp" + "\">" + data["temp"].name + "</a></li>";
+
+            // Part 4 (DONE)
+              $('#sensors-list').html(sensorsList);
+
+          },
+
+          error: function (jqXHR, textStatus, errorThrown) {
+            console.log(errorThrown);
+          }
+        });
+      }
+    });
+
+    e.preventDefault();
+  }
+
+  $('#message-form').submit(processForm);
+})(jQuery);
+</script>
+
+
+</body>
+</html>
